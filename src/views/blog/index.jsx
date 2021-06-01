@@ -68,7 +68,7 @@ class Blog extends Component {
       const data = await res.json();
       this.setState((state) => {
         return {
-          blog: data[0],
+          blog: data,
           loading: false,
         };
       });

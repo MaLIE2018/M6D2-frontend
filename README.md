@@ -1,2 +1,1 @@
-# M6D2-frontend
- 
+# Strive Blog Template

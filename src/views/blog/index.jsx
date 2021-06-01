@@ -60,6 +60,20 @@ class Blog extends Component {
     }
   };
 
+  deletePost = async () => {
+    const { id } = this.props.match.params;
+    try {
+      const api = process.env.REACT_APP_BACKEND_API_URL;
+      const res = await fetch(api + `/blogPosts/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Deletion went wrong");
+      this.props.history.push("/");
+    } catch (error) {
+      console.log("getPosts failed", error);
+    }
+  };
+
   getPost = async (id) => {
     try {
       const api = process.env.REACT_APP_BACKEND_API_URL;
@@ -140,6 +154,9 @@ class Blog extends Component {
                 <a className='btn btn-primary' onClick={this.getPDF}>
                   Create PDF
                 </a>
+                <Button className='btn btn-danger' onClick={this.deletePost}>
+                  Delete
+                </Button>
               </Col>
             </Row>
 

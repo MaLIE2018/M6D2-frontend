@@ -13,11 +13,10 @@ export default class NewBlogPost extends Component {
         title: "",
         content: "",
         category: "",
-        author: { name: "", avatar: "", email: "" },
+        author: localStorage.getItem("authorId"),
         cover: "",
         readTime: { value: 2, unit: "minute" },
       },
-      authorAvatar: undefined,
       blogPostCover: undefined,
     };
   }
@@ -51,39 +50,12 @@ export default class NewBlogPost extends Component {
     });
   };
 
-  handleChangeName = (e) => {
-    this.setState((state) => {
-      return {
-        post: {
-          ...this.state.post,
-          author: { ...this.state.post.author, [e.target.id]: e.target.value },
-        },
-      };
-    });
-  };
-
-  handleFileChange = (e) => {
-    const formData = new FormData();
-    formData.append(e.target.id, e.currentTarget.files[0]);
-    this.setState((state) => {
-      return { [e.target.id]: formData };
-    });
-  };
-
-  fileUpload = async (id, purpose) => {
+  fileUpload = async (id) => {
     const api = process.env.REACT_APP_BACKEND_API_URL;
     try {
-      console.log("purpose:", purpose);
-      console.log(
-        "api + `/blogPosts/${id}/${purpose}`:",
-        api + `/${id}/${purpose}`
-      );
-      let res = await fetch(api + `/blogPosts/${id}/${purpose}`, {
+      let res = await fetch(api + `/blogPosts/${id}/uploadCover`, {
         method: "POST",
-        body:
-          purpose === "uploadAvatar"
-            ? this.state.authorAvatar
-            : this.state.blogPostCover,
+        body: this.state.blogPostCover,
       });
       if (!res.ok) {
         throw new Error("fileupload got an error!");
@@ -113,34 +85,35 @@ export default class NewBlogPost extends Component {
     this.postBlogPost();
   }
 
+  handleFileChange = (e) => {
+    const formData = new FormData();
+    formData.append(e.target.id, e.currentTarget.files[0]);
+    this.setState((state) => {
+      return { ...state, blogPostCover: formData };
+    });
+  };
+
   postBlogPost = async () => {
-    if (isEmail(this.state.post.author.email)) {
-      try {
-        const api = process.env.REACT_APP_BACKEND_API_URL;
-        let res = await fetch(api + "/blogPosts", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(this.state.post),
-        });
-        if (res.ok) {
-          console.log("BlogPost created");
-          let data = await res.json();
-          if (this.state.authorAvatar) {
-            await this.fileUpload(data._id, "uploadAvatar");
-          }
-          if (this.state.blogPostCover) {
-            await this.fileUpload(data._id, "uploadCover");
-          }
-          await this.sendEmail(data._id);
-          this.props.history.push("/");
+    try {
+      const api = process.env.REACT_APP_BACKEND_API_URL;
+      let res = await fetch(api + "/blogPosts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(this.state.post),
+      });
+      if (res.ok) {
+        console.log("BlogPost created");
+        let data = await res.json();
+        if (this.state.blogPostCover) {
+          await this.fileUpload(data._id);
         }
-      } catch (error) {
-        console.log(error);
+        await this.sendEmail(data._id);
+        this.props.history.push("/");
       }
-    } else {
-      alert("Please put a valid email");
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -156,35 +129,6 @@ export default class NewBlogPost extends Component {
               placeholder='Title'
               value={this.state.post.title}
               onChange={(e) => this.handleChange(e)}
-            />
-          </Form.Group>
-          <Form.Group controlId='name' className='mt-3'>
-            <Form.Label>Author's Name</Form.Label>
-            <Form.Control
-              size='lg'
-              required
-              placeholder='Name'
-              value={this.state.post.author.name}
-              onChange={(e) => this.handleChangeName(e)}
-            />
-          </Form.Group>
-          <Form.Group controlId='email' className='mt-3'>
-            <Form.Label>Author's Email</Form.Label>
-            <Form.Control
-              size='lg'
-              required
-              placeholder='email'
-              value={this.state.post.author.email}
-              onChange={(e) => this.handleChangeName(e)}
-            />
-          </Form.Group>
-          <Form.Group>
-            <Form.Label>Avatar</Form.Label>
-            <Form.File
-              id='authorAvatar'
-              label='Upload an author avatar'
-              onChange={(e) => this.handleFileChange(e)}
-              accept='image/*'
             />
           </Form.Group>
           <Form.Group controlId='category' className='mt-3'>
